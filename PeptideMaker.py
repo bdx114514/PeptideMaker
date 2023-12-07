@@ -8,7 +8,7 @@ from simtk import openmm, unit
 from openmm import app
 from openmm.app import PDBFile
 
-def build_pep(seq,out_dir,remove_process):
+def build_pep(seq,out_dir,helix,retain_process_files):
     #1.build peptide backbone
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
@@ -16,8 +16,9 @@ def build_pep(seq,out_dir,remove_process):
     reslist = list(seq)
     for i in range(len(reslist)):
         geo = Geometry.geometry(reslist[i])
-        geo.phi = -60
-        geo.psi_im1 = -40
+        if helix == True:
+            geo.phi = -60
+            geo.psi_im1 = -40
         if i == 0:
             structure = PeptideBuilder.initialize_res(geo)
         else:
@@ -50,13 +51,18 @@ def build_pep(seq,out_dir,remove_process):
     minimized_state = simulation.context.getState(getEnergy=True, getPositions=True)
     minimized_energy = minimized_state.getPotentialEnergy()
     minimized_positions = minimized_state.getPositions()
+    
 
-    with open(f"{out_dir}/ACE-{seq}-NME.pdb", 'w') as pdb_file:
+    if helix == True:
+        filename = f"{out_dir}/ACE-{seq}-NME_helix.pdb"
+    else:
+        filename = f"{out_dir}/ACE-{seq}-NME_loop.pdb"
+    with open(filename, 'w') as pdb_file:
         app.PDBFile.writeFile(simulation.topology, minimized_positions, pdb_file)
 
     print(f"Minimized energy: {minimized_energy}")
-    print(f"Minimized structure saved to {out_dir}/ACE-{seq}-NME.pdb")
-    if remove_process == True:
+    print(f"Minimized structure saved to {filename}")
+    if retain_process_files == False:
         os.system(f"rm {out_dir}/step*")
 
   
@@ -64,9 +70,10 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--seq', type=str, required=True)
-    parser.add_argument('-o', '--out_dir', type=str, required=True)    
-    parser.add_argument('-remove', '--remove_process', action='store_true', default=True)
+    parser.add_argument('-o', '--out_dir', type=str, required=True) 
+    parser.add_argument('-helix', '--helix', action='store_true', default=False)   
+    parser.add_argument('-retain', '--retain_process_files', action='store_true', default=False)
     args = parser.parse_args()
-    build_pep(args.seq,args.out_dir,args.remove_process)
+    build_pep(args.seq,args.out_dir,args.helix,args.retain_process_files)
     os.system
 
