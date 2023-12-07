@@ -10,7 +10,8 @@ from openmm.app import PDBFile
 
 def build_pep(seq,out_dir,remove_process):
     #1.build peptide backbone
-    os.mkdir(out_dir)
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
     seq = "A" + seq + "A"
     reslist = list(seq)
     for i in range(len(reslist)):
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--seq', type=str, required=True)
-    parser.add_argument('-o', '--out_dir', type=str, default='./')    
+    parser.add_argument('-o', '--out_dir', type=str, required=True)    
     parser.add_argument('-remove', '--remove_process', action='store_true', default=True)
     args = parser.parse_args()
     build_pep(args.seq,args.out_dir,args.remove_process)
